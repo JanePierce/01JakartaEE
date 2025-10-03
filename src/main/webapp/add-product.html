@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Добавить продукт</title>
+</head>
+<body>
+<h1>➕ Добавить новый продукт</h1>
+<form id="productForm">
+    <div>
+        <label>Название:</label>
+        <input type="text" id="name" required>
+    </div>
+    <div>
+        <label>Цена:</label>
+        <input type="number" id="price" step="0.01" required>
+    </div>
+    <div>
+        <label>Количество:</label>
+        <input type="number" id="quantity" required>
+    </div>
+    <div>
+        <label>Категория ID:</label>
+        <input type="number" id="categoryId" required>
+    </div>
+    <button type="submit">Добавить</button>
+</form>
+
+<script>
+    document.getElementById('productForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const product = {
+            name: document.getElementById('name').value,
+            price: parseFloat(document.getElementById('price').value),
+            quantity: parseInt(document.getElementById('quantity').value),
+            category: { id: parseInt(document.getElementById('categoryId').value) }
+        };
+
+        fetch('/store-app/api/products', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(product)
+        })
+        .then(response => {
+            if (response.ok) {
+                alert('Продукт добавлен!');
+                this.reset();
+            } else {
+                alert('Ошибка при добавлении');
+            }
+        });
+    });
+</script>
+</body>
+</html>

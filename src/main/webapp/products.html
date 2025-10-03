@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Каталог продуктов</title>
+    <style>
+        body { font-family: Arial; margin: 20px; }
+        table { border: 1px solid black; width: 100%; }
+        th, td { border: 1px solid black; padding: 8px; }
+        th { background-color: #ffdb58; }
+        td { background-color: #ffffc2; }
+        input { margin: 5px; padding: 5px; }
+        button { padding: 5px 10px; margin: 5px; }
+        button { background-color: #ffdb58; }
+    </style>
+</head>
+<body>
+<h1>Каталог продуктов</h1>
+
+<table id="productsTable">
+    <tr>
+        <th>ID</th>
+        <th>Название</th>
+        <th>Цена</th>
+        <th>Количество</th>
+        <th>Категория</th>
+    </tr>
+</table>
+
+<h2>Управление товарами</h2>
+
+<div>
+    <h3>Добавить товар:</h3>
+    <input type="text" id="name" placeholder="Название">
+    <input type="number" id="price" placeholder="Цена">
+    <input type="number" id="quantity" placeholder="Количество">
+    <select id="categoryId">
+        <option value="1">Электроника</option>
+        <option value="2">Книги</option>
+        <option value="3">Одежда</option>
+    </select>
+    <button onclick="addProduct()">Добавить</button>
+</div>
+
+<table id="actionsTable">
+    <tr>
+        <th>ID</th>
+        <th>Название</th>
+        <th>Цена</th>
+        <th>Количество</th>
+        <th>Действия</th>
+    </tr>
+</table>
+
+<script>
+    const API_BASE = '/store-app/api/products';
+
+    function loadProducts() {
+        fetch(API_BASE)
+            .then(response => response.json())
+            .then(products => {
+                const catalogTable = document.querySelector('#productsTable');
+                const actionsTable = document.querySelector('#actionsTable');
+
+                // Очищаем таблицы кроме заголовков
+                while (catalogTable.rows.length > 1) catalogTable.deleteRow(1);
+                while (actionsTable.rows.length > 1) actionsTable.deleteRow(1);
+
+                products.forEach(product => {
+                    // Верхняя таблица для просмотра
+                    const row1 = catalogTable.insertRow();
+                    row1.insertCell(0).textContent = product.id;
+                    row1.insertCell(1).textContent = product.name;
+                    row1.insertCell(2).textContent = product.price + ' руб.';
+                    row1.insertCell(3).textContent = product.quantity;
+                    row1.insertCell(4).textContent = product.category.name;
+
+                    // Нижняя таблица с действиями
+                    const row2 = actionsTable.insertRow();
+                    row2.insertCell(0).textContent = product.id;
+                    row2.insertCell(1).textContent = product.name;
+                    row2.insertCell(2).textContent = product.price + ' руб.';
+                    row2.insertCell(3).textContent = product.quantity;
+
+                    const actionsCell = row2.insertCell(4);
+                    actionsCell.innerHTML =
+                        '<button onclick="editProduct(' + product.id + ')">Редактировать</button>' +
+                        '<button onclick="deleteProduct(' + product.id + ')">Удалить</button>';
+                });
+            });
+    }
+
+    function addProduct() {
+        const product = {
+            name: document.getElementById('name').value,
+            price: parseFloat(document.getElementById('price').value),
+            quantity: parseInt(document.getElementById('quantity').value),
+            category: { id: parseInt(document.getElementById('categoryId').value) }
+        };
+
+        fetch(API_BASE, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(product)
+        }).then(() => {
+            loadProducts();
+            document.getElementById('name').value = '';
+            document.getElementById('price').value = '';
+            document.getElementById('quantity').value = '';
+        });
+    }
+
+    function deleteProduct(id) {
+        fetch(API_BASE + '/' + id, {
+            method: 'DELETE'
+        }).then(() => loadProducts());
+    }
+
+    function editProduct(id) {
+        const newName = prompt('Новое название:');
+        if (newName) {
+            fetch(API_BASE + '/' + id)
+                .then(response => response.json())
+                .then(product => {
+                    product.name = newName;
+                    return fetch(API_BASE + '/' + id, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(product)
+                    });
+                })
+                .then(() => loadProducts());
+        }
+    }
+
+    loadProducts();
+</script>
+</body>
+</html>
